@@ -4,16 +4,17 @@ WITH tb_transacoes AS (
             IdCliente,
             QtdePontos,
             datetime(substr(DtCriacao, 1, 19)) AS DtCriacao,
-            julianday('now') - julianday(substr(DtCriacao, 1, 10)) AS diffDate,
+            julianday('2025-07-01') - julianday(substr(DtCriacao, 1, 10)) AS diffDate,
             CAST(strftime('%H', DtCriacao) AS INTEGER) AS dtHora
 
     FROM transacoes
+    WHERE DtCriacao < '2025-07-01'
 ),
 
 tb_cliente AS (
     SELECT IdCliente,
         datetime(substr(DtCriacao, 1, 19)) AS DtCriacao,
-        julianday('now') - julianday(substr(DtCriacao, 1, 10)) AS idadeBase
+        julianday('2025-06-01') - julianday(substr(DtCriacao, 1, 10)) AS idadeBase
     FROM clientes
 ),
 
@@ -125,6 +126,8 @@ SELECT IdTransacao,
         
 FROM tb_transacoes
 
+WHERE diffDate <= 28
+
 GROUP BY 1, 2
 ),
 
@@ -145,7 +148,7 @@ SELECT t1.*,
         t6.DescNomeProduto AS produto14,
         t7.DescNomeProduto AS produto7,
         COALESCE(t8.dtDia, -1) AS dtDia,
-        t9.dtPeriodo
+        COALESCE(t9.dtPeriodo, 'SEM INFORMAÇÃO') AS periodoMaisTransacao28
 
 FROM tb_sumario_transacoes AS t1
 
@@ -157,20 +160,20 @@ ON t1.IdCliente = t3.IdCliente
 AND t3.rnVida = 1
 
 LEFT JOIN tb_cliente_produto_rn AS t4
-ON t1.IdCliente = t3.IdCliente
-AND t3.rn56 = 1
+ON t1.IdCliente = t4.IdCliente
+AND t4.rn56 = 1
 
 LEFT JOIN tb_cliente_produto_rn AS t5
-ON t1.IdCliente = t3.IdCliente
-AND t3.rn28 = 1
+ON t1.IdCliente = t5.IdCliente
+AND t5.rn28 = 1
 
 LEFT JOIN tb_cliente_produto_rn AS t6
-ON t1.IdCliente = t3.IdCliente
-AND t3.rn14 = 1
+ON t1.IdCliente = t6.IdCliente
+AND t6.rn14 = 1
 
 LEFT JOIN tb_cliente_produto_rn AS t7
-ON t1.IdCliente = t3.IdCliente
-AND t3.rn7 = 1
+ON t1.IdCliente = t7.IdCliente
+AND t7.rn7 = 1
 
 LEFT JOIN tb_cliente_dia_rn AS t8
 ON t1.IdCliente = t8.IdCliente
@@ -181,7 +184,8 @@ ON t1.IdCliente = t9.IdCliente
 AND t9.rnPeriodo = 1
 )
 
-SELECT IdCliente, dtDia, dtPeriodo
+SELECT '2025-06-01' AS dtRef,
+        *,
+        1.* qtdeTransacao28 / qtdeTransacaoVida AS engajamento28Vida
 FROM tb_join
 
-LIMIT 5
